@@ -1,18 +1,20 @@
 import axios from "axios";
 import React, { createContext, useEffect, useState } from "react";
-import { BASE_URL } from "../config";
+import { BASE_URL, BASE_URL_SERVER } from "../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({children}) => {
+export const AuthProvider = ({ children }) => {
     const [userInfo, setUserInfo] = useState({});
+    const [outputs, setOutputs] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [splashLoading, setSplashLoading] = useState(false);
 
     const register = (nom, prenom, cin, date_de_naissance, email, password) => {
         setIsLoading(true);
-        
+
         axios
             .post(`${BASE_URL}/register`, {
                 nom,
@@ -23,13 +25,15 @@ export const AuthProvider = ({children}) => {
                 password
             })
             .then(res => {
+                Alert.alert('Message', 'Registration Successful');
                 let userInfo = res.data;
                 setUserInfo(userInfo);
                 AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
                 setIsLoading(false);
             })
             .catch(e => {
-                console.log(`register error ${e}`);
+                console.log(`register error ${e.response.data.detail}`);
+                Alert.alert('Error', e.response.data.detail);
                 setIsLoading(false);
             });
     };
@@ -49,7 +53,8 @@ export const AuthProvider = ({children}) => {
                 setIsLoading(false);
             })
             .catch(e => {
-                console.log(`login error ${e.response}`);
+                console.log(`register error ${e.response.data.detail}`);
+                Alert.alert('Error', e.response.data.detail);
                 setIsLoading(false);
             });
     };
@@ -59,9 +64,9 @@ export const AuthProvider = ({children}) => {
 
         axios
             .post(`${BASE_URL}/logout`, {
-                },{
-                    // headers: {Authorization: `Bearer ${userInfo.access_token}`},
-                },
+            }, {
+                // headers: {Authorization: `Bearer ${userInfo.access_token}`},
+            },
             )
             .then(res => {
                 console.log(res.data);
@@ -93,19 +98,40 @@ export const AuthProvider = ({children}) => {
         }
     }
 
+    const chat = async (input) => {
+        console.log('Message : ' + input);
+        setIsLoading(true);
+
+        try {
+            const response = await axios.post(`${BASE_URL_SERVER}/Cogni`, {
+                input
+            });
+
+            let _output = response.data.output;
+            console.log()
+            setOutputs(_output);
+        } catch (error) {
+            console.log(`register error ${error}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
         isLoggedIn();
     }, []);
 
     return (
-        <AuthContext.Provider 
-        value={{
-            isLoading,
-            userInfo,
-            register,
-            splashLoading,
-            login,
-            logout
+        <AuthContext.Provider
+            value={{
+                isLoading,
+                userInfo,
+                register,
+                splashLoading,
+                login,
+                logout,
+                chat,
+                outputs
             }}>
             {children}
         </AuthContext.Provider>
