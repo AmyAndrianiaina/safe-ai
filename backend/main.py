@@ -1,6 +1,7 @@
 import schemas.index as schemas
 import models.index as models
-import ai_model_api.api as api
+import ai_model_api.api as apis
+from api.Api import api
 from config.database import Base, engine, SessionLocal
 from fastapi import FastAPI, Depends, HTTPException,status
 from sqlalchemy.orm import Session
@@ -53,5 +54,10 @@ def register_user():
     
 @app.post("/chat")
 def register_user(chat: schemas.Chat):
-    return {"output":api.Api.getOutput(chat.input)}
+    return {"output":apis.Api.getOutput(chat.input)}
+
+@app.post("/Cogni")
+def get_question(question: str):
+    response = api(question)
+    return response
     
